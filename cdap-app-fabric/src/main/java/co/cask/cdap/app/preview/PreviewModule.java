@@ -81,6 +81,9 @@ public class PreviewModule extends PrivateModule {
     expose(NamespaceQueryAdmin.class);
     
     bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
+    expose(PreviewManager.class);
+
+    bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
 
     bind(Scheduler.class).to(NoopScheduler.class);
 
