@@ -148,31 +148,31 @@ features:
         vcores: VCores
         memory: Memory
       labels:
-        accepted: Accepted
+        Accepted: Accepted
         available: Available
         corrupt: Corrupt
         currentCapacity: Current Capacity
         deadRegionServers: Dead Region Servers
         decommissioned: Decomissioned
         decommissionInProgress: Decomission In Progress
-        failed: Failed
+        Failed: Failed
+        Finished: Finished
         healthy: Healthy
-        killed: Killed
+        Killed: Killed
         liveRegionServers: Live Region Servers
         lost: Lost
         maxCapacity: Max Capacity
-        new: New
-        new_saving: New Saving
+        New: New
         masters: Masters
         missing: Missing
         namespaces: Namespaces
         namepsaces: Namespaces
-        running: Running
+        Running: Running
         rebooted: Rebooted
         stopped: Stopped
-        submitted: Submitted
+        Submitted: Submitted
         tables: Tables
-        total: Total
+        Total: Total
         totalRegionServers: Total Region Servers
         underreplicated: Underreplicated
         used: Used
