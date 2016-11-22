@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes, Component} from 'react';
-import {SCHEMA_TYPES, checkComplexType, getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
+import {SCHEMA_TYPES, checkComplexType, getParsedSchema, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 require('./RecordSchemaRow.less');
 import uuid from 'node-uuid';
@@ -28,20 +28,15 @@ export default class RecordSchemaRow extends Component{
     super(props);
     if (typeof props.row === 'object') {
       let displayFields = getParsedSchema(props.row);
-      let parsedFields = displayFields.map(field => {
-        let {name, type} = field;
-        return {
-          name,
-          type
-        };
-      }).filter(field => field.name && field.type);
+      let parsedFields = displayFields
+        .map(({name, type}) => ({name, type}));
       this.state = {
         type: 'record',
         name: 'a' +  uuid.v4().split('-').join(''),
         displayFields,
-        parsedFields,
         error: ''
       };
+      this.parsedFields = parsedFields;
     } else {
       this.state = {
         type: 'record',
@@ -52,111 +47,63 @@ export default class RecordSchemaRow extends Component{
             type: 'string',
             displayType: 'string',
             nullable: false,
-            id: 'a' + uuid.v4().split('-').join(''),
-            nested: false
+            id: uuid.v4()
           }
         ],
-        parsedFields: [{
-          name: '',
-          type: 'string'
-        }],
         error: ''
       };
+      this.parsedFields = [{
+        name: '',
+        type: 'string'
+      }];
     }
-    setTimeout(() => {
-      let parsedFields = this.state
-        .parsedFields
-        .filter(field => field.name && field.type);
-      props.onChange({
-        type: 'record',
-        name: this.state.name,
-        fields: parsedFields
-      });
-    });
+    setTimeout(this.updateParent.bind(this));
   }
   onRowAdd(index) {
-    let displayFields = this.state.displayFields;
-    let parsedFields = this.state.parsedFields;
-    displayFields = insertAt(displayFields, index, {
+    let displayFields = insertAt([...this.state.displayFields], index, {
       name: '',
       displayType: 'string',
       id: uuid.v4()
     });
-    parsedFields = insertAt(parsedFields, index, {
+    let parsedFields = insertAt([...this.parsedFields], index, {
       name: '',
       type: 'string'
     });
-    this.setState({
-      displayFields,
-      parsedFields
-    });
+    this.parsedFields = parsedFields;
+    this.setState({ displayFields });
   }
   onRowRemove(index) {
-    let displayFields = this.state.displayFields;
-    let parsedFields = this.state.parsedFields;
-    displayFields = removeAt(displayFields, index);
-    parsedFields = removeAt(parsedFields, index);
+    let displayFields = removeAt([...this.state.displayFields], index);
+    let parsedFields = removeAt([...this.parsedFields], index);
+    this.parsedFields = parsedFields;
     this.setState({
-      displayFields,
-      parsedFields
-    }, () => {
-      let parsedFields = this.state
-        .parsedFields
-        .filter(field => field.name && field.type);
-      this.props.onChange({
-        type: 'record',
-        name: this.state.name,
-        fields: parsedFields
-      });
-    });
+      displayFields
+    }, this.updateParent.bind(this));
   }
   onNameChange(index, e) {
     let displayFields = this.state.displayFields;
-    let parsedFields = this.state.parsedFields;
+    let parsedFields = this.parsedFields;
     displayFields[index].name = e.target.value;
     parsedFields[index].name = e.target.value;
     let error;
     if (SCHEMA_TYPES.simpleTypes.indexOf(displayFields[index].displayType) !== -1) {
-      error = this.isInvalid(parsedFields);
+      error = this.checkForErrors(parsedFields);
       if (error) {
         this.setState({ error });
         return;
       }
     }
+    this.parsedFields = parsedFields;
     this.setState({
-      parsedFields,
       displayFields,
       error: ''
-    }, () => {
-      let parsedFields = this.state
-        .parsedFields
-        .filter(field => field.name && field.type);
-      this.props.onChange({
-        name: this.state.name,
-        type: 'record',
-        fields: parsedFields
-      });
-    });
-  }
-  isInvalid(parsedTypes) {
-    let error = '';
-    let parsedType = {
-      name: this.state.name,
-      type: 'record',
-      fields: parsedTypes
-    };
-    try {
-      avsc.parse(parsedType);
-    } catch(e) {
-      error = e.message;
-    }
-    return error;
+    }, this.updateParent.bind(this));
   }
   onTypeChange(index, e) {
     let displayFields = this.state.displayFields;
+    let parsedFields = this.parsedFields;
     displayFields[index].displayType = e.target.value;
     displayFields[index].type = e.target.value;
-    let parsedFields = this.state.parsedFields;
     let error;
     if (displayFields[index].nullable) {
       parsedFields[index].type = [
@@ -167,7 +114,7 @@ export default class RecordSchemaRow extends Component{
       parsedFields[index].type = e.target.value;
     }
     if (SCHEMA_TYPES.simpleTypes.indexOf(displayFields[index].displayType) !== -1) {
-      error = this.isInvalid(parsedFields);
+      error = this.checkForErrors(parsedFields);
       if (error) {
         this.setState({ error });
         return;
@@ -175,26 +122,12 @@ export default class RecordSchemaRow extends Component{
     }
     this.setState({
       displayFields,
-      parsedFields,
       error: ''
-    }, () => {
-      let error = this.isInvalid(this.state.parsedFields);
-      if (error) {
-        return;
-      }
-      let parsedFields = this.state
-        .parsedFields
-        .filter(field => field.name && field.type);
-      this.props.onChange({
-        name: this.state.name,
-        type: 'record',
-        fields: parsedFields,
-      });
-    });
+    }, this.updateParent.bind(this));
   }
   onNullableChange(index, e) {
     let displayFields = this.state.displayFields;
-    let parsedFields = this.state.parsedFields;
+    let parsedFields = this.parsedFields;
     displayFields[index].nullable = e.target.checked;
     if (e.target.checked) {
       parsedFields[index].type = [
@@ -206,22 +139,21 @@ export default class RecordSchemaRow extends Component{
         parsedFields[index].type = parsedFields[index].type[0];
       }
     }
+    this.parsedFields = parsedFields;
     this.setState({
-      displayFields,
-      parsedFields
-    }, () => {
-      let parsedFields = this.state
-        .parsedFields
-        .filter(field => field.name && field.type);
-      this.props.onChange({
-        name: this.state.name,
-        type: 'record',
-        fields: parsedFields
-      });
-    });
+      displayFields
+    }, this.updateParent.bind(this));
   }
-  onChange(index, fieldType) {
-    let parsedFields = this.state.parsedFields;
+  checkForErrors(parsedTypes) {
+    let parsedType = {
+      name: this.state.name,
+      type: 'record',
+      fields: parsedTypes
+    };
+    return checkParsedTypeForError(parsedType);
+  }
+  onChildrenChange(index, fieldType) {
+    let parsedFields = this.parsedFields;
     let displayFields = this.state.displayFields;
 
     if (displayFields[index].nullable) {
@@ -233,25 +165,21 @@ export default class RecordSchemaRow extends Component{
       parsedFields[index].type = fieldType;
     }
 
-    let error = this.isInvalid(parsedFields);
+    let error = this.checkForErrors(parsedFields);
     if (error) {
       return;
     }
-    this.setState({
-      parsedFields,
-      error: ''
-    }, function() {
-      if (this.isInvalid(this.state.parsedFields)) {
-        return;
-      }
-      let parsedFields = this.state
-        .parsedFields
-        .filter(field => field.name && field.type);
-      this.props.onChange({
-        name: this.state.name,
-        type: 'record',
-        fields: parsedFields
-      });
+    this.parsedFields = parsedFields;
+    this.updateParent();
+  }
+  updateParent() {
+    if (this.checkForErrors(this.parsedFields)) {
+      return;
+    }
+    this.props.onChange({
+      name: this.state.name,
+      type: 'record',
+      fields: this.parsedFields
     });
   }
   render() {
@@ -315,7 +243,7 @@ export default class RecordSchemaRow extends Component{
                       checkComplexType(row.displayType) ?
                         <AbstractSchemaRow
                           row={row.type}
-                          onChange={this.onChange.bind(this, index)}
+                          onChange={this.onChildrenChange.bind(this, index)}
                         />
                       :
                         null

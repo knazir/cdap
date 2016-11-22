@@ -114,9 +114,20 @@ function checkComplexType(displayType) {
   return complexTypes.indexOf(displayType) !== -1 ? true : false;
 }
 
+function checkParsedTypeForError(parsedTypes) {
+  let error = '';
+  try {
+    avsc.parse(parsedTypes);
+  } catch(e) {
+    error = e.message;
+  }
+  return error;
+}
+
 export {
   SCHEMA_TYPES,
   parseType,
   checkComplexType,
-  getParsedSchema
+  getParsedSchema,
+  checkParsedTypeForError
 };

@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes, Component} from 'react';
-import {parseType, SCHEMA_TYPES, checkComplexType} from 'components/SchemaEditor/SchemaHelpers';
+import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import SelectWithOptions from 'components/SelectWithOptions';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 import {Input} from 'reactstrap';
@@ -30,12 +30,11 @@ export default class UnionSchemaRow extends Component {
     if (typeof props.row === 'object') {
       let parsedTypes = props.row.getTypes();
       let displayTypes = parsedTypes.map(type => Object.assign({}, parseType(type), {id: 'a' + uuid.v4()}));
-
       this.state = {
         displayTypes,
-        parsedTypes,
         error: ''
       };
+      this.parsedTypes = parsedTypes;
     } else {
       this.state = {
         displayTypes: [
@@ -46,29 +45,18 @@ export default class UnionSchemaRow extends Component {
             nullable: false
           }
         ],
-        parsedTypes: [
-          'string'
-        ],
         error: ''
       };
+      this.parsedTypes = [
+        'string'
+      ];
     }
-    setTimeout(() => {
-      props.onChange(this.state.parsedTypes);
-    });
+    setTimeout(this.props.onChange.bind(this, this.parsedTypes));
     this.onTypeChange = this.onTypeChange.bind(this);
-  }
-  isInvalid(parsedTypes) {
-    let error = '';
-    try {
-      avsc.parse(parsedTypes);
-    } catch(e) {
-      error = e.message;
-    }
-    return error;
   }
   onNullableChange(index, e) {
     let displayTypes = this.state.displayTypes;
-    let parsedTypes = this.state.parsedTypes;
+    let parsedTypes = this.parsedTypes;
     displayTypes[index].nullable = e.target.checked;
     let error = '';
     if (e.target.checked) {
@@ -79,19 +67,19 @@ export default class UnionSchemaRow extends Component {
     } else {
       parsedTypes[index] = parsedTypes[index][0];
     }
+    this.parsedTypes = parsedTypes;
     this.setState({
       displayTypes,
-      parsedTypes,
       error
     }, () => {
-      this.props.onChange(this.state.parsedTypes);
+      this.props.onChange(this.parsedTypes);
     });
   }
   onTypeChange(index, e) {
     let displayTypes = this.state.displayTypes;
     displayTypes[index].displayType = e.target.value;
     displayTypes[index].type = e.target.value;
-    let parsedTypes = this.state.parsedTypes;
+    let parsedTypes = this.parsedTypes;
     let error = '';
     if (displayTypes[index].nullable) {
       parsedTypes[index] = [
@@ -102,45 +90,37 @@ export default class UnionSchemaRow extends Component {
       parsedTypes[index] = e.target.value;
     }
     if (SCHEMA_TYPES.simpleTypes.indexOf(e.target.value) !== -1) {
-      error = this.isInvalid(parsedTypes);
+      error = checkParsedTypeForError(parsedTypes);
       if (error) {
         this.setState({ error });
         return;
       }
     }
+    this.parsedTypes = parsedTypes;
     this.setState({
       displayTypes,
-      parsedTypes,
       error
-    }, () => {
-      this.props.onChange(this.state.parsedTypes);
-    });
+    }, this.props.onChange.bind(this, this.parsedTypes));
   }
   onTypeAdd(index) {
-    let displayTypes = this.state.displayTypes;
-    let parsedTypes = this.state.parsedTypes;
-    displayTypes = insertAt(displayTypes, index, {
+    let displayTypes = insertAt([...this.state.displayTypes], index, {
       type: 'string',
       displayType: 'string',
       id: uuid.v4(),
       nullable: false
     });
-    parsedTypes = insertAt(parsedTypes, index, 'string');
-    this.setState({ displayTypes, parsedTypes }, () => {
-      this.props.onChange(this.state.parsedTypes);
-    });
+    let parsedTypes = insertAt([...this.parsedTypes], index, 'string');
+    this.parsedTypes = parsedTypes;
+    this.setState({ displayTypes }, this.props.onChange.bind(this, this.parsedTypes));
   }
   onTypeRemove(index) {
-    let displayTypes = this.state.displayTypes;
-    let parsedTypes = this.state.parsedTypes;
-    displayTypes = removeAt(displayTypes, index);
-    parsedTypes = removeAt(parsedTypes, index);
-    this.setState({ displayTypes, parsedTypes }, () => {
-      this.props.onChange(this.state.parsedTypes);
-    });
+    let displayTypes = removeAt([...this.state.displayTypes], index);
+    let parsedTypes = removeAt([...this.parsedTypes], index);
+    this.parsedTypes = parsedTypes;
+    this.setState({ displayTypes }, this.props.onChange.bind(this, this.parsedTypes));
   }
-  onChange(index, parsedType) {
-    let parsedTypes = this.state.parsedTypes;
+  onChildrenChange(index, parsedType) {
+    let parsedTypes = this.parsedTypes;
     let displayTypes = this.state.displayTypes;
     let error;
     if (displayTypes[index].nullable) {
@@ -151,10 +131,12 @@ export default class UnionSchemaRow extends Component {
     } else {
       parsedTypes[index] = parsedType;
     }
-    error = this.isInvalid(parsedTypes);
-    this.setState({parsedTypes, error}, () => {
-      this.props.onChange(this.state.parsedTypes);
-    });
+    error = checkParsedTypeForError(parsedTypes);
+    if (error) {
+      return;
+    }
+    this.parsedTypes = parsedTypes;
+    this.props.onChange(this.parsedTypes);
   }
   render() {
     return (
@@ -204,7 +186,7 @@ export default class UnionSchemaRow extends Component {
                     checkComplexType(displayType.displayType) ?
                       <AbstractSchemaRow
                         row={displayType.type}
-                        onChange={this.onChange.bind(this, index)}
+                        onChange={this.onChildrenChange.bind(this, index)}
                       />
                     :
                       null

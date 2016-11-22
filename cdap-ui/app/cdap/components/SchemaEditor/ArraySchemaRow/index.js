@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes, Component} from 'react';
-import {parseType, SCHEMA_TYPES, checkComplexType} from 'components/SchemaEditor/SchemaHelpers';
+  import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import SelectWithOptions from 'components/SelectWithOptions';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 import {Input} from 'reactstrap';
@@ -32,39 +32,25 @@ export default class ArraySchemaRow extends Component{
           type: item.displayType,
           nullable: item.nullable
         },
-        parsedType: props.row.getItemsType(),
         error: ''
       };
+      this.parsedType = props.row.getItemsType();
     } else {
       this.state = {
         displayType: {
-          type: props.row.type || 'string',
+          type: 'string',
           nullable: false
         },
-        parsedType: props.row.type || 'string',
         error: ''
       };
+      this.parsedType = 'string';
     }
     this.onTypeChange = this.onTypeChange.bind(this);
-    setTimeout(() => {
-      props.onChange({
-        type: 'array',
-        items: this.state.parsedType
-      });
-    });
-  }
-  isInvalid(parsedTypes) {
-    let error = '';
-    try {
-      avsc.parse(parsedTypes);
-    } catch(e) {
-      error = e.message;
-    }
-    return error;
+    setTimeout(this.updateParent.bind(this));
   }
   onTypeChange(e) {
     if (SCHEMA_TYPES.simpleTypes.indexOf(e.target.value) !== -1) {
-      let error = this.isInvalid({
+      let error = checkParsedTypeForError({
         type: 'array',
         items: e.target.value
       });
@@ -75,29 +61,17 @@ export default class ArraySchemaRow extends Component{
         return;
       }
     }
+    this.parsedType = e.target.value;
     this.setState({
       displayType: {
         type: e.target.value,
         nullable: this.state.displayType.nullable
       },
-      parsedType: e.target.value,
       error: ''
-    }, () => {
-      let error = this.isInvalid({
-        type: 'array',
-        items: this.state.parsedType
-      });
-      if (error) {
-        return;
-      }
-      this.props.onChange({
-        type: 'array',
-        items: this.state.parsedType
-      });
-    });
+    }, this.updateParent.bind(this));
   }
   onNullableChange(e) {
-    let error = this.isInvalid({
+    let error = checkParsedTypeForError({
       type: 'array',
       items: e.target.value
     });
@@ -113,47 +87,32 @@ export default class ArraySchemaRow extends Component{
         nullable: e.target.checked
       },
       error: ''
-    }, () => {
-      if (this.state.displayType.nullable) {
-        this.props.onChange({
-          type: 'array',
-          items: [
-            this.state.parsedType,
-            null
-          ]
-        });
-      } else {
-        this.props.onChange({
-          type: 'array',
-          items: this.state.parsedType
-        });
-      }
-    });
+    }, this.updateParent.bind(this));
   }
-  onChange(itemsState) {
-    let error = this.isInvalid({
+  onChildrenChange(itemsState) {
+    let error = checkParsedTypeForError({
       type: 'array',
       items: this.state.displayType.nullable ? [itemsState, 'null'] : itemsState
     });
     if (error) {
       return;
     }
-    this.setState({
-      parsedType: itemsState,
-      error: ''
-    });
+    this.parsedType = itemsState;
+    this.updateParent();
+  }
+  updateParent() {
     if (this.state.displayType.nullable) {
       this.props.onChange({
         type: 'array',
         items: [
-          itemsState,
+          this.parsedType,
           'null'
         ]
       });
     } else {
       this.props.onChange({
         type: 'array',
-        items: itemsState
+        items: this.parsedType
       });
     }
   }
@@ -185,8 +144,8 @@ export default class ArraySchemaRow extends Component{
         {
           checkComplexType(this.state.displayType.type) ?
             <AbstractSchemaRow
-              row={this.state.parsedType}
-              onChange={this.onChange.bind(this)}
+              row={this.parsedType}
+              onChange={this.onChildrenChange.bind(this)}
             />
           :
             null

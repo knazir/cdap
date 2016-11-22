@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes, Component} from 'react';
-import {parseType} from 'components/SchemaEditor/SchemaHelpers';
+import {parseType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import {Input} from 'reactstrap';
 import {insertAt, removeAt} from 'services/helpers';
 import uuid from 'node-uuid';
@@ -38,22 +38,17 @@ export default class EnumSchemaRow extends Component {
       };
     }
   }
-  isInvalid(parsedTypes) {
-    let error = '';
-    try {
-      avsc.parse(parsedTypes);
-    } catch(e) {
-      error = e.message;
-    }
-    return error;
+  checkForErrors(symbols) {
+    let parsedType = {
+      type: 'enum',
+      symbols
+    };
+    return checkParsedTypeForError(parsedType);
   }
   onSymbolChange(index, e) {
     let symbols = this.state.symbols;
     symbols[index] = e.target.value;
-    let error = this.isInvalid({
-      type: 'enum',
-      symbols
-    });
+    let error = this.checkForErrors(symbols);
     if (error) {
       this.setState({error});
       return;
@@ -68,15 +63,11 @@ export default class EnumSchemaRow extends Component {
       });
     });
   }
-
   onSymbolAdd(index, e) {
     let symbols = this.state.symbols;
     symbols = insertAt(symbols, index, e.target.value || '');
     this.setState({symbols}, () => {
-      let error = this.isInvalid({
-        type: 'enum',
-        symbols
-      });
+      let error = this.checkForErrors(symbols);
       if (error) {
         return;
       }
@@ -86,7 +77,6 @@ export default class EnumSchemaRow extends Component {
       });
     });
   }
-
   onSymbolRemove(index) {
     let symbols = this.state.symbols;
     symbols = removeAt(symbols, index);
@@ -99,7 +89,6 @@ export default class EnumSchemaRow extends Component {
       });
     });
   }
-
   render() {
     return (
       <div className="enum-schema-row">

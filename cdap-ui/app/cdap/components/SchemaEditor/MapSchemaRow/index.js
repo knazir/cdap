@@ -16,7 +16,7 @@
 
 import React, {PropTypes, Component} from 'react';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {parseType, SCHEMA_TYPES, checkComplexType} from 'components/SchemaEditor/SchemaHelpers';
+import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 import {Input} from 'reactstrap';
 
@@ -30,77 +30,47 @@ export default class MapSchemaRow extends Component {
       this.state = {
         name: rowType.name,
         keysType: rowType.type.getKeysType().getTypeName(),
-        parsedKeysType: rowType.type.getKeysType(),
         keysTypeNullable: rowType.nullable,
         valuesType: rowType.type.getValuesType().getTypeName(),
-        parsedValuesType: rowType.type.getValuesType(),
         valuesTypeNullable: rowType.nullable,
         error: ''
       };
+      this.parsedKeysType = rowType.type.getKeysType();
+      this.parsedValuesType = rowType.type.getValuesType();
     } else {
       this.state = {
         name: props.row.name,
         keysType: 'string',
-        parsedKeysType: 'string',
         keysTypeNullable: false,
         valuesType: 'string',
-        parsedValuesType: 'string',
         valuesTypeNullable: false,
-        type: props.row.type || null,
         error: ''
       };
+      this.parsedKeysType = 'string';
+      this.parsedValuesType = 'string';
     }
-    setTimeout(() => {
-      this.props.onChange({
-        type: 'map',
-        keys: Array.isArray(this.state.keysTypeNullable) ? [this.state.parsedKeysType, null] : this.state.parsedKeysType,
-        values: Array.isArray(this.state.valuesTypeNullable) ? [this.state.parsedValuesType, null] : this.state.parsedValuesType
-      });
-    });
+    setTimeout(this.updateParent.bind(this));
     this.onKeysTypeChange = this.onKeysTypeChange.bind(this);
     this.onValuesTypeChange = this.onValuesTypeChange.bind(this);
   }
   onKeysTypeChange(e) {
-    this.setState({
-      keysType: e.target.value
-    }, () => {
-      this.onKeysChange(this.state.keysType);
-    });
-  }
-  onValuesTypeChange(e) {
-    this.setState({
-      valuesType: e.target.value
-    }, () => {
-      this.onValuesChange(this.state.valuesType);
-    });
-  }
-  onKeysChange(keysState) {
     let error;
-    if (SCHEMA_TYPES.simpleTypes.indexOf(this.state.keysType) !== -1) {
-      error = this.isInvalid(keysState);
+    if (SCHEMA_TYPES.simpleTypes.indexOf(e.target.value) !== -1) {
+      error = checkParsedTypeForError(e.target.value);
       if (error) {
         this.setState({ error });
         return;
       }
     }
+    this.parsedKeysType = e.target.value;
     this.setState({
-      parsedKeysType: keysState
-    }, () => {
-      if (this.isInvalid(this.state.parsedKeysType)) {
-        return;
-      }
-      this.props.onChange({
-        type: 'map',
-        keys: this.state.keysTypeNullable ? [this.state.parsedKeysType, null] : this.state.parsedKeysType,
-        values: this.state.valuesTypeNullable ? [this.state.parsedValuesType, null] : this.state.parsedValuesType,
-        error: ''
-      });
-    });
+      keysType: e.target.value
+    }, this.updateParent.bind(this));
   }
-  onValuesChange(valuesState) {
+  onValuesTypeChange(e) {
     let error;
-    if (SCHEMA_TYPES.simpleTypes.indexOf(this.state.valuesType) !== -1) {
-      error = this.isInvalid(valuesState);
+    if (SCHEMA_TYPES.simpleTypes.indexOf(e.target.value) !== -1) {
+      error = checkParsedTypeForError(e.target.value);
       if (error) {
         this.setState({
           error
@@ -108,42 +78,44 @@ export default class MapSchemaRow extends Component {
         return;
       }
     }
+    this.parsedValuesType = e.target.value;
     this.setState({
-      parsedValuesType: valuesState
-    }, () => {
-      if (this.isInvalid(this.state.parsedValuesType)) {
-        return;
-      }
-      this.props.onChange({
-        type: 'map',
-        keys: this.state.keysTypeNullable ? [this.state.parsedKeysType, null] : this.state.parsedKeysType,
-        values: this.state.valuesTypeNullable ? [this.state.parsedValuesType, null] : this.state.parsedValuesType,
-        error: ''
-      });
+      valuesType: e.target.value
+    }, this.updateParent.bind(this));
+  }
+  updateParent() {
+    if (checkParsedTypeForError(this.parsedValuesType) || checkParsedTypeForError(this.parsedKeysType)) {
+      return;
+    }
+    this.props.onChange({
+      type: 'map',
+      keys: this.state.keysTypeNullable ? [this.parsedKeysType, null] : this.parsedKeysType,
+      values: this.state.valuesTypeNullable ? [this.parsedValuesType, null] : this.parsedValuesType
     });
+  }
+  onKeysChildrenChange(keysState) {
+    if (checkParsedTypeForError(keysState)) {
+      return;
+    }
+    this.parsedKeysType = keysState;
+    this.updateParent();
+  }
+  onValuesChildrenChange(valuesState) {
+    if (checkParsedTypeForError(valuesState)) {
+      return;
+    }
+    this.parsedValuesType = valuesState;
+    this.updateParent();
   }
   onKeysTypeNullableChange(e) {
     this.setState({
       keysTypeNullable: e.target.checked
-    }, () => {
-      this.onKeysChange(this.state.parsedKeysType);
-    });
+    }, this.updateParent.bind(this));
   }
   onValuesTypeNullableChange(e) {
     this.setState({
       valuesTypeNullable: e.target.checked
-    }, () => {
-      this.onValuesChange(this.state.parsedValuesType);
-    });
-  }
-  isInvalid(parsedTypes) {
-    let error = '';
-    try {
-      avsc.parse(parsedTypes);
-    } catch(e) {
-      error = e.message;
-    }
-    return error;
+    }, this.updateParent.bind(this));
   }
   render() {
     return (
@@ -174,8 +146,8 @@ export default class MapSchemaRow extends Component {
             {
               checkComplexType(this.state.keysType) ?
                 <AbstractSchemaRow
-                  row={this.state.parsedKeysType}
-                  onChange={this.onKeysChange.bind(this)}
+                  row={this.parsedKeysType}
+                  onChange={this.onKeysChildrenChange.bind(this)}
                 />
               :
                 null
@@ -203,8 +175,8 @@ export default class MapSchemaRow extends Component {
               {
                 checkComplexType(this.state.valuesType) ?
                   <AbstractSchemaRow
-                    row={this.state.parsedValuesType}
-                    onChange={this.onValuesChange.bind(this)}
+                    row={this.parsedValuesType}
+                    onChange={this.onValuesChildrenChange.bind(this)}
                   />
                 :
                   null
