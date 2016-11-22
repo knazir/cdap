@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+@import '../../styles/mixins.less';
 .schema-editor {
   width: 600px;
   .schema-header{
@@ -37,6 +37,59 @@
     .field-isnull {
       font-weight: bolder;
       display: inline-block;
+    }
+  }
+  .schema-body {
+    .schema-row {
+      > .field-name {
+        width: ~"calc(100% - 80px - 75px)";
+        width: ~"-moz-calc(100% - 80px - 75px)";
+        width: ~"-webkit-calc(100% - 80px - 75px)";
+      }
+      > .field-type {
+        width: 80px;
+        padding: 0 5px;
+        vertical-align: top;
+        position: relative;
+
+        &:after {
+          color: #3c4355;
+          content: "\f0d7";
+          font-family: 'FontAwesome';
+          position: absolute;
+          top: 25%;
+          right: 10px;
+          z-index: 5;
+        }
+      }
+      > .field-isnull {
+        width: 75px;
+        .btn.btn-link {
+          display: inline-block;
+          padding: 0 5px;
+          width: 24px;
+        }
+      }
+      .field-name,
+      .field-type,
+      .field-isnull {
+        display: inline-block;
+      }
+      .form-control {
+        padding: 0 5px;
+        height: 25px;
+        margin: 2px 0 0 0;
+        appearance: none;
+        border: 0;
+        box-shadow: none;
+        .appearance();
+        .placeholder-color(@color: #666666, @font-weight: 500);
+        &:focus {
+          border-color: #dddddd;
+          outline: 1px solid #098cf9;
+          box-shadow: none;
+        }
+      }
     }
   }
   // .schema-body {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,11 +12,19 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-@import '../../../styles/mixins.less';
-.record-schema-row {
-  > .schema-row {
-  
+
+.placeholder-color(@color: white, @font-weight: 500) {
+    color: @color;
+    font-weight: @font-weight;
+}
+.appearance(@value: none) {
+  appearance: @value;
+  -webkit-appearance: @value;
+  -moz-appearance: @value;
+  -o-appearance: @value;
+  ::-ms-expand {
+    display: none;  // Need this to hide default select in IE10
   }
 }

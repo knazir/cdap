@@ -51,10 +51,38 @@ let createStoreInstance = () => {
       "schema": {
         "name": "etlSchemabody",
         "type": "record",
-        "fields": [{
-          name: '',
-          type: 'string'
-        }]
+        "fields": [
+            {
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "name": "something",
+                "type": {
+                    "type": "record",
+                    "name": "a84146164937b4c3098a99136fb42637e",
+                    "fields": [
+                        {
+                            "name": "ss",
+                            "type": {
+                                "type": "record",
+                                "name": "ae7e6107e7e324ad794a1f523c0c91fd5",
+                                "fields": [
+                                    {
+                                        "name": "adjnsd",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "name": "sdfsdf",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        ]
       }
     },
     window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()

@@ -22,6 +22,7 @@ import uuid from 'node-uuid';
 import {Input} from 'reactstrap';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {insertAt, removeAt} from 'services/helpers';
+import T from 'i18n-react';
 
 export default class RecordSchemaRow extends Component{
   constructor(props) {
@@ -200,6 +201,7 @@ export default class RecordSchemaRow extends Component{
                   >
                     <div className="field-name">
                       <Input
+                        placeholder={T.translate('features.SchemaEditor.Labels.fieldName')}
                         defaultValue={row.name}
                         onFocus={() => row.name}
                         onBlur={this.onNameChange.bind(this, index)}

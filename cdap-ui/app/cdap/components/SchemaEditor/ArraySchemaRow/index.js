@@ -122,7 +122,7 @@ export default class ArraySchemaRow extends Component{
         <div className="text-danger">
           {this.state.error}
         </div>
-        <div className="array-schema-type-row">
+        <div className="schema-row">
           <div className="field-name">
             <SelectWithOptions
               options={SCHEMA_TYPES.types}

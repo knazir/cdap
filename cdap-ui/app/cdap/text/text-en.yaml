@@ -237,6 +237,9 @@ features:
       headerSearchResults: "Search results for: {query}"
       numResults: "{total} results found"
 
+  SchemaEditor:
+    Labels:
+      fieldName: Field Name
   Wizard:
     ApplicationUpload:
       Step1:
