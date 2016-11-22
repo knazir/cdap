@@ -38,8 +38,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.tephra.Transaction;
+import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
@@ -213,8 +215,8 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
     // Accessing dataset instance to perform data operations
-    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS,
-                                                                 null);
+    final PartitionedFileSet partitioned = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS,
+                                                                       null);
     Assert.assertNotNull(partitioned);
     FileSet fileSet = partitioned.getEmbeddedFileSet();
 
@@ -229,9 +231,9 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     FileWriterHelper.generateAvroFile(locationX2.getOutputStream(), "x", 2, 3);
     FileWriterHelper.generateAvroFile(locationY2.getOutputStream(), "y", 2, 3);
 
-    PartitionKey keyX1 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 1).build();
+    final PartitionKey keyX1 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 1).build();
     PartitionKey keyY1 = PartitionKey.builder().addStringField("str", "y").addIntField("num", 1).build();
-    PartitionKey keyX2 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 2).build();
+    final PartitionKey keyX2 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 2).build();
     PartitionKey keyY2 = PartitionKey.builder().addStringField("str", "y").addIntField("num", 2).build();
 
     addPartition(partitioned, keyX1, "fileX1");
@@ -279,6 +281,22 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
     // drop a partition and query again
     dropPartition(partitioned, keyX2);
+    validatePartitions(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
+
+    // attempt a transaction that drops one partition, adds another, and then fails
+    try {
+      doTransaction(partitioned, new Runnable() {
+        @Override
+        public void run() {
+          partitioned.dropPartition(keyX1);
+          partitioned.addPartition(keyX2, "fileX2");
+          Assert.fail("fail tx");
+        }
+      });
+    } catch (TransactionFailureException e) {
+      // expected
+    }
+    // validate that both the drop and addPartition were undone
     validatePartitions(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
     // verify that one value is gone now, namely x2
@@ -780,15 +798,14 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     });
   }
 
-  private void doTransaction(Dataset tpfs, Runnable runnable) throws Exception {
-    TransactionAware txAware = (TransactionAware) tpfs;
-    Transaction tx = transactionManager.startShort(100);
-    txAware.startTx(tx);
-    runnable.run();
-    Assert.assertTrue(txAware.commitTx());
-    Assert.assertTrue(transactionManager.canCommit(tx, txAware.getTxChanges()));
-    Assert.assertTrue(transactionManager.commit(tx));
-    txAware.postTxCommit();
+  private void doTransaction(Dataset tpfs, final Runnable runnable) throws Exception {
+    TransactionExecutor executor = new DefaultTransactionExecutor(transactionSystemClient, (TransactionAware) tpfs);
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        runnable.run();
+      }
+    });
   }
 
 }
