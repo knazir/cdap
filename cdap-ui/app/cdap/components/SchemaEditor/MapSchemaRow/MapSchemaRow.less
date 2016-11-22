@@ -31,13 +31,34 @@
         width: ~"calc(100% - 80px - 75px)";
         width: ~"-webkit-calc(100% - 80px - 75px)";
         width: ~"-moz-calc(100% - 80px - 75px)";
-        display: inline-flex;
-        align-items: center;
+        display: inline-block;
         span {
           &:first-child {
             margin: 0 10px 0 0;
             min-width: 30px;
           }
+        }
+      }
+    }
+    > .key-row {
+      > .field-name {
+        .form-control {
+          width: ~"calc(100% - 37px)";
+          width: ~"-moz-calc(100% - 37px)";
+          width: ~"-webkit-calc(100% - 37px)";
+          vertical-align: inherit;
+          display: inline-block;
+        }
+      }
+    }
+    > .value-row {
+      > .field-name {
+        .form-control {
+          width: ~"calc(100% - 47px)";
+          width: ~"-moz-calc(100% - 47px)";
+          width: ~"-webkit-calc(100% - 47px)";
+          vertical-align: inherit;
+          display: inline-block;
         }
       }
     }
@@ -47,7 +68,7 @@
     .field-isnull {
       width: 75px;
       .btn.btn-link {
-        padding: 5px;
+        padding: 0 5px;
       }
     }
     .field-type,
