@@ -21,7 +21,6 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewStatus;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -29,7 +28,6 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -107,19 +105,23 @@ public class DefaultPreviewManager implements PreviewManager {
 
       @Override
       public void completed() {
-        status = new PreviewStatus(PreviewStatus.Status.COMPLETED, null);
+        setStatus(new PreviewStatus(PreviewStatus.Status.COMPLETED, null));
       }
 
       @Override
       public void killed() {
-        status = new PreviewStatus(PreviewStatus.Status.KILLED, null);
+        setStatus(new PreviewStatus(PreviewStatus.Status.KILLED, null));
       }
 
       @Override
       public void error(Throwable cause) {
-        status = new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause));
+        setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause)));
       }
     }, Threads.SAME_THREAD_EXECUTOR);
+  }
+
+  private synchronized void setStatus(PreviewStatus status) {
+    this.status = status;
   }
 
   private ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) {
