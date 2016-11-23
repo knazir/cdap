@@ -29,6 +29,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -152,7 +153,8 @@ public class AuthEnforceRewriter implements ClassRewriter {
     // We found some method which has AuthEnforce annotation so we need a second pass in to rewrite the class
     // in second pass we COMPUTE_FRAMES and visit classes with EXPAND_FRAMES
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    cr.accept(new AuthEnforceAnnotationRewriter(className, cw, methodAnnotations), ClassReader.EXPAND_FRAMES);
+    cr.accept(new AuthEnforceAnnotationRewriter(className, cw, classVisitor.getFieldDetails(), methodAnnotations),
+              ClassReader.EXPAND_FRAMES);
     return cw.toByteArray();
   }
 
@@ -166,11 +168,13 @@ public class AuthEnforceRewriter implements ClassRewriter {
     private final String className;
     private final Map<Method, AnnotationDetails> methodAnnotations;
     private boolean interfaceClass;
+    private final Map<String, Type> fieldDetails;
 
     AuthEnforceAnnotationVisitor(String className) {
       super(Opcodes.ASM5);
       this.className = className;
       this.methodAnnotations = new HashMap<>();
+      this.fieldDetails = new HashMap<>();
     }
 
     @Override
@@ -178,6 +182,12 @@ public class AuthEnforceRewriter implements ClassRewriter {
       // visit the header of the class to identify if this class is an interface
       super.visit(version, access, name, signature, superName, interfaces);
       interfaceClass = Modifier.isInterface(access);
+    }
+
+    @Override
+    public FieldVisitor visitField(int access, final String fieldName, String desc, String signature, Object value) {
+      fieldDetails.put(fieldName, Type.getType(desc));
+      return super.visitField(access, fieldName, desc, signature, value);
     }
 
     @Override
@@ -222,7 +232,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
           }
           // Since AuthEnforce annotation was used on this method then look for parameters with named annotation and
           // store their position.
-          // TODO: Support looking class field too in the ClassVisitor
           // TODO: Should also pick up names from QueryParam and PathParam annotations here as needed later
           AnnotationNode annotationNode = new AnnotationNode(desc);
           // store the parameter position and its annotation detail
@@ -241,10 +250,17 @@ public class AuthEnforceRewriter implements ClassRewriter {
             Map<String, Integer> paramAnnotation = processParameterAnnotationNode(parameterAnnotationNode);
 
             for (String name : nodeProcessor.getEntities()) {
-              Preconditions.checkArgument(paramAnnotation.containsKey(name),
-                                          String.format("No method parameter found wih a name %s for method %s in " +
-                                                          "class %s whereas it was specified in AuthEnforce " +
-                                                          "annotation.", name, methodName, className));
+              // Make sure that the entities specified in the AuthEnforce annotation are found in method parameters
+              // or class fields. Its fine if they exist at both places in that case we will give preference to
+              // method parameters unless its been specified with this. in that case its always looked in class field.
+              Preconditions.checkArgument(fieldDetails.containsKey(name.startsWith("this.") ?
+                                                                     getFieldName(name) : name) ||
+                                            paramAnnotation.containsKey(name),
+                                          String.format("No named method parameter or a class field found with name " +
+                                                          "%s in class %s for method %s whereas it was specified " +
+                                                          "in %s annotation", name, className, methodName,
+                                                        AuthEnforce.class.getSimpleName()));
+
             }
             // Store all the information properly for the second pass
             methodAnnotations.put(new Method(methodName, methodDesc),
@@ -258,6 +274,9 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
     Map<Method, AnnotationDetails> getMethodAnnotations() {
       return methodAnnotations;
+    }
+    Map<String, Type> getFieldDetails() {
+      return fieldDetails;
     }
   }
 
@@ -275,11 +294,14 @@ public class AuthEnforceRewriter implements ClassRewriter {
     private final Map<Method, AnnotationDetails> methodAnnotations;
     private final String authenticationContextFieldName;
     private final String authorizationEnforcerFieldName;
+    private final Map<String, Type> fieldDetails;
 
-    AuthEnforceAnnotationRewriter(String className, ClassWriter cw, Map<Method, AnnotationDetails> methodAnnotations) {
+    AuthEnforceAnnotationRewriter(String className, ClassWriter cw, Map<String, Type> fieldDetails,
+                                  Map<Method, AnnotationDetails> methodAnnotations) {
       super(Opcodes.ASM5, cw);
       this.className = className;
       this.classType = Type.getObjectType(className.replace(".", "/"));
+      this.fieldDetails = fieldDetails;
       this.methodAnnotations = methodAnnotations;
       this.authenticationContextFieldName = generateUniqueFieldName(AUTHENTICATION_CONTEXT_FIELD_NAME);
       this.authorizationEnforcerFieldName = generateUniqueFieldName(AUTHORIZATION_ENFORCER_FIELD_NAME);
@@ -320,8 +342,22 @@ public class AuthEnforceRewriter implements ClassRewriter {
           // push the parameters of method call on to the stack
 
           // pushed the entity id
-          visitVarInsn(ALOAD, annotationDetails.getParameterAnnotation()
-            .get(annotationDetails.getEntities().get(0)) + 1); // + 1 because 0 specify "this"
+          //TODO: This is because currently we don't support multi-part
+          String name = annotationDetails.getEntities().get(0);
+          if (name.startsWith("this.")) { // if the entity name was specified with this. then we only look for it in
+            // class field
+            String fieldNameWithoutThis = getFieldName(name);
+            loadThis();
+            getField(classType, fieldNameWithoutThis, fieldDetails.get(fieldNameWithoutThis));
+          } else if (annotationDetails.getParameterAnnotation().containsKey(name)) { // method parameter has preference
+            // + 1 because 0 specify "this"
+            visitVarInsn(ALOAD, annotationDetails.getParameterAnnotation().get(name) + 1);
+          } else {
+            // not found in method parameter so get from class field. We have already verified that the entity name
+            // exist either in method parameter or class field.
+            loadThis();
+            getField(classType, name, fieldDetails.get(name));
+          }
 
           // push the authentication context
           // this.authenticationContext
@@ -502,5 +538,18 @@ public class AuthEnforceRewriter implements ClassRewriter {
     Map<String, Integer> getParameterAnnotation() {
       return parameterAnnotation;
     }
+  }
+
+  /**
+   * Return the field name without "this." if the given field name starts with it
+   *
+   * @param fieldNameWithThis the fieldname which starts with this.
+   * @return the field name without this.
+   */
+  private static String getFieldName(String fieldNameWithThis) {
+    Preconditions.checkArgument(fieldNameWithThis.startsWith("this."), String.format("The given fieldname %s does " +
+                                                                                       "not start with 'this.'",
+                                                                                     fieldNameWithThis));
+    return fieldNameWithThis.substring(fieldNameWithThis.lastIndexOf(".") + 1);
   }
 }
