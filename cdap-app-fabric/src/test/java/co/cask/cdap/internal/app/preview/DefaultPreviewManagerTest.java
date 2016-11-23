@@ -21,6 +21,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewManager;
+import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.app.preview.PreviewServerModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -59,9 +60,9 @@ import org.junit.Test;
 import java.util.HashSet;
 
 /**
- * Tests for {@link DelegatingPreviewManager}.
+ * Tests for {@link DefaultPreviewManager}.
  */
-public class DelegatingPreviewManagerTest {
+public class DefaultPreviewManagerTest {
   private static Injector injector;
 
   @BeforeClass
@@ -113,24 +114,23 @@ public class DelegatingPreviewManagerTest {
     Assert.assertEquals(getInjector().getInstance(PreviewManager.class),
                         getInjector().getInstance(PreviewManager.class));
 
-    Assert.assertTrue(getInjector().getInstance(PreviewManager.class) instanceof DelegatingPreviewManager);
+    Assert.assertTrue(getInjector().getInstance(PreviewManager.class) instanceof DefaultPreviewManager);
 
     PreviewManager previewManager = getInjector().getInstance(PreviewManager.class);
-    DelegatingPreviewManager delegatingPreviewManager = (DelegatingPreviewManager) previewManager;
+    DefaultPreviewManager defaultPreviewManager = (DefaultPreviewManager) previewManager;
 
-
-    Injector previewInjector = delegatingPreviewManager.createPreviewInjector(new ApplicationId("ns1", "app1"),
-                                                                              new HashSet<String>());
+    Injector previewInjector = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns1", "app1"),
+                                                                           new HashSet<String>());
 
     // Make sure same PreviewManager instance is returned for a same preview
-    Assert.assertEquals(previewInjector.getInstance(PreviewManager.class),
-                        previewInjector.getInstance(PreviewManager.class));
+    Assert.assertEquals(previewInjector.getInstance(PreviewRunner.class),
+                        previewInjector.getInstance(PreviewRunner.class));
 
     Injector anotherPreviewInjector
-      = delegatingPreviewManager.createPreviewInjector(new ApplicationId("ns2", "app2"), new HashSet<String>());
+      = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns2", "app2"), new HashSet<String>());
 
-    Assert.assertNotEquals(previewInjector.getInstance(PreviewManager.class),
-                           anotherPreviewInjector.getInstance(PreviewManager.class));
+    Assert.assertNotEquals(previewInjector.getInstance(PreviewRunner.class),
+                           anotherPreviewInjector.getInstance(PreviewRunner.class));
 
     Assert.assertNotNull(anotherPreviewInjector.getInstance(PreviewRuntimeService.class));
   }

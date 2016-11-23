@@ -25,7 +25,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
-import co.cask.cdap.internal.app.preview.DelegatingPreviewManager;
+import co.cask.cdap.internal.app.preview.DefaultPreviewManager;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -53,7 +53,7 @@ public class PreviewServerModule extends PrivateModule {
     expose(PreviewServer.class);
     bind(PreviewHttpHandler.class).in(Scopes.SINGLETON);
     expose(PreviewHttpHandler.class);
-    bind(PreviewManager.class).to(DelegatingPreviewManager.class).in(Scopes.SINGLETON);
+    bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
     expose(PreviewManager.class);
   }
 }

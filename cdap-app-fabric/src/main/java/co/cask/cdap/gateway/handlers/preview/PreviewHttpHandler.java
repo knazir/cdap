@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.handlers.preview;
 
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.BasicThrowable;
@@ -65,15 +64,13 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
   public void start(HttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
-    ApplicationId application = namespace.app(RunIds.generate().getId());
     AppRequest appRequest;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
       appRequest = GSON.fromJson(reader, AppRequest.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }
-    previewManager.start(application, appRequest);
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(application));
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.start(namespace, appRequest)));
   }
 
   @POST
@@ -82,7 +79,7 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
                    @PathParam("preview-id") String previewId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-    previewManager.stop(application);
+    previewManager.getRunner(application).stop();
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -92,8 +89,7 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("preview-id") String previewId)  throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.getStatus(application)));
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getStatus()));
   }
 
   @GET
@@ -111,6 +107,6 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
                       @PathParam("tracer-id") String tracerId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.getData(application, tracerId)));
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getData(tracerId)));
   }
 }
