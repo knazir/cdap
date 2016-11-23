@@ -20,8 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.messaging.store.PayloadTableTest;
+import co.cask.cdap.messaging.store.MessageTable;
+import co.cask.cdap.messaging.store.MessageTableTest;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -31,9 +31,9 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
 /**
- * HBase implementation of {@link PayloadTableTest}.
+ * HBase implementation of {@link MessageTableTest}.
  */
-public class HBasePayloadTableTestRun extends PayloadTableTest {
+public class HBaseMessageTableTestRun extends MessageTableTest {
 
   @ClassRule
   public static final ExternalResource TEST_BASE = HBaseMessageTestSuite.TEST_BASE;
@@ -53,7 +53,7 @@ public class HBasePayloadTableTestRun extends PayloadTableTest {
     tableUtil = new HBaseTableUtilFactory(cConf).get();
     tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
 
-    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil);
+    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil, null);
   }
 
   @AfterClass
@@ -63,7 +63,7 @@ public class HBasePayloadTableTestRun extends PayloadTableTest {
   }
 
   @Override
-  protected PayloadTable getPayloadTable() throws Exception {
-    return tableFactory.createPayloadTable(NamespaceId.CDAP, "payload");
+  protected MessageTable getMessageTable() throws Exception {
+    return tableFactory.createMessageTable(NamespaceId.CDAP, "message");
   }
 }

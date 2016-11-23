@@ -20,8 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.messaging.store.MetadataTable;
-import co.cask.cdap.messaging.store.MetadataTableTest;
+import co.cask.cdap.messaging.store.PayloadTable;
+import co.cask.cdap.messaging.store.PayloadTableTest;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -31,9 +31,9 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
 /**
- * Tests for {@link HBaseMetadataTable}
+ * HBase implementation of {@link PayloadTableTest}.
  */
-public class HBaseMetadataTableTestRun extends MetadataTableTest {
+public class HBasePayloadTableTestRun extends PayloadTableTest {
 
   @ClassRule
   public static final ExternalResource TEST_BASE = HBaseMessageTestSuite.TEST_BASE;
@@ -53,7 +53,7 @@ public class HBaseMetadataTableTestRun extends MetadataTableTest {
     tableUtil = new HBaseTableUtilFactory(cConf).get();
     tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
 
-    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil);
+    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil, null);
   }
 
   @AfterClass
@@ -63,7 +63,7 @@ public class HBaseMetadataTableTestRun extends MetadataTableTest {
   }
 
   @Override
-  protected MetadataTable createMetadataTable() throws Exception {
-    return tableFactory.createMetadataTable(NamespaceId.CDAP, "metadata");
+  protected PayloadTable getPayloadTable() throws Exception {
+    return tableFactory.createPayloadTable(NamespaceId.CDAP, "payload");
   }
 }
