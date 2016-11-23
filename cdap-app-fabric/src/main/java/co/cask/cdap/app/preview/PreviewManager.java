@@ -21,7 +21,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 
 /**
- * Interface used for managing the preview lifecycle and retrieval of the preview data.
+ * Interface used for managing the preview runs.
  */
 public interface PreviewManager {
 
