@@ -118,6 +118,7 @@ features:
       metrics_processor: Metrics Processor
       dataset_executor: Dataset Executor
       metadata_service: Metadata Service
+      remote_system_operation: Remote System Operation
       streams: Streams
       explore_service: Explore Service
       metrics: Metrics
@@ -149,8 +150,8 @@ features:
         memory: Memory
       labels:
         accepted: Accepted
-        available: Available
-        corrupt: Corrupt
+        RemainingBytes: Available
+        CorruptBlocks: Corrupt Blocks
         currentCapacity: Current Capacity
         deadRegionServers: Dead Region Servers
         decommissioned: Decomissioned
@@ -164,18 +165,18 @@ features:
         new: New
         new_saving: New Saving
         masters: Masters
-        missing: Missing
+        MissingBlocks: Missing Blocks
         namespaces: Namespaces
-        namepsaces: Namespaces
+        Namenodes: Namenodes
         running: Running
         rebooted: Rebooted
         stopped: Stopped
         submitted: Submitted
         tables: Tables
-        total: Total
+        TotalBytes: Total
         totalRegionServers: Total Region Servers
-        underreplicated: Underreplicated
-        used: Used
+        UnderReplicatedBlocks: Under Replicated Blocks
+        UsedBytes: Used
         unhealthy: Unhealthy
 
     Component-Overview:
