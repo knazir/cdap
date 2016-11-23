@@ -19,7 +19,6 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
 import com.google.gson.JsonElement;
 import org.apache.twill.api.logging.LogEntry;
 
@@ -68,8 +67,9 @@ public interface PreviewManager {
    * @param preview the id associated with the preview
    * @param tracerName the name of the tracer used for preview
    * @return the {@link Map} of properties associated with the tracer for a given preview
+   * @throws NotFoundException if preview application is not found
    */
-  Map<String, List<JsonElement>> getData(ApplicationId preview, String tracerName);
+  Map<String, List<JsonElement>> getData(ApplicationId preview, String tracerName) throws NotFoundException;
 
   /**
    * Get metric associated with the preview.
