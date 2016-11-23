@@ -19,6 +19,7 @@ import SelectWithOptions from 'components/SelectWithOptions';
 import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 import {Input} from 'reactstrap';
+import classnames from 'classnames';
 
 require('./MapSchemaRow.less');
 
@@ -123,10 +124,14 @@ export default class MapSchemaRow extends Component {
         <div className="text-danger">
           {this.state.error}
         </div>
-        <div className="map-schema-kv-row">
-          <div className="key-row">
+        <div className="schema-row">
+          <div className={
+            classnames("key-row clearfix", {
+              "nested": checkComplexType(this.state.keysType)
+            })
+          }>
             <div className="field-name">
-              <span> Key </span>
+              <div> Key: </div>
               <SelectWithOptions
                 options={SCHEMA_TYPES.types}
                 value={this.state.keysType}
@@ -134,7 +139,7 @@ export default class MapSchemaRow extends Component {
               />
             </div>
             <div className="field-type"></div>
-            <div className="field-isnull">
+            <div className="field-isnull pull-right">
               <div className="btn btn-link">
                 <Input
                   type="checkbox"
@@ -153,9 +158,13 @@ export default class MapSchemaRow extends Component {
                 null
             }
           </div>
-          <div className="value-row">
+          <div className={
+            classnames("value-row clearfix", {
+              "nested": checkComplexType(this.state.valuesType)
+            })
+          }>
             <div className="field-name">
-              <span className="text-right">Value </span>
+              <div>Value: </div>
               <SelectWithOptions
                 options={SCHEMA_TYPES.types}
                 value={this.state.valuesType}
@@ -163,7 +172,7 @@ export default class MapSchemaRow extends Component {
               />
             </div>
             <div className="field-type"></div>
-            <div className="field-isnull">
+            <div className="field-isnull pull-right">
               <div className="btn btn-link">
                 <Input
                   type="checkbox"

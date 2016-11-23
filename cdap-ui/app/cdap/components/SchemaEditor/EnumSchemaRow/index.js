@@ -19,6 +19,7 @@ import {parseType, checkParsedTypeForError} from 'components/SchemaEditor/Schema
 import {Input} from 'reactstrap';
 import {insertAt, removeAt} from 'services/helpers';
 import uuid from 'node-uuid';
+import T from 'i18n-react';
 require('./EnumSchemaRow.less');
 
 export default class EnumSchemaRow extends Component {
@@ -104,6 +105,7 @@ export default class EnumSchemaRow extends Component {
               >
                 <Input
                   className="field-name"
+                  placeholder={T.translate('features.SchemaEditor.Labels.symbolName')}
                   defaultValue={symbol}
                   onFocus={() => symbol}
                   onBlur={this.onSymbolChange.bind(this, index)}

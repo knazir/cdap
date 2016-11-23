@@ -14,9 +14,16 @@
  * the License.
 */
 
-@import '../../../styles/mixins.less';
 .record-schema-row {
   > .schema-row {
-  
+    &:only-child {
+      border: 0;
+    }
+  }
+  .schema-row {
+    box-shadow: 3px -2px 5px rgba(0, 0, 0, 0.25), 0px 0px 0px white;
+  }
+  .schema-row ~ .schema-row {
+    box-shadow: none;
   }
 }

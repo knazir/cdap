@@ -14,33 +14,26 @@
  * the License.
 */
 .union-schema-row {
-  .union-schema-types-row {
-    padding-left: 5px;
-
-    > div {
-      > .form-control {
-        width: ~"calc(100% - 80px - 75px)";
-        width: ~"-webkit-calc(100% - 80px - 75px)";
-        width: ~"-moz-calc(100% - 80px - 75px)";
-        padding: 0;
-        height: 25px;
-        margin: 2px 0 0 0;
-        display: inline-block;
+  > .schema-row {
+    border: 0;
+    &.nested {
+      >.field-name {
+        box-shadow: rgba(1, 0, 0, 0.25) 1px -1px 7px;
+        border-radius: 4px;
+        width: 155px;
       }
     }
-    .field-type {
-      width: 80px;
-    }
-    .field-isnull {
-      width: 75px;
-      .btn.btn-link {
-        padding: 0 5px;
-        width: 24px;
+    > .field-name {
+      position: relative;
+      &:after {
+        color: #3c4355;
+        content: "\f0d7";
+        font-family: 'FontAwesome';
+        position: absolute;
+        top: 7px;
+        right: 10px;
+        z-index: 5;
       }
-    }
-    .field-isnull,
-    .field-type {
-      display: inline-block;
     }
   }
 }

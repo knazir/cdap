@@ -19,6 +19,7 @@ import React, {PropTypes, Component} from 'react';
 import SelectWithOptions from 'components/SelectWithOptions';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 import {Input} from 'reactstrap';
+import classnames from 'classnames';
 
 require('./ArraySchemaRow.less');
 
@@ -122,7 +123,11 @@ export default class ArraySchemaRow extends Component{
         <div className="text-danger">
           {this.state.error}
         </div>
-        <div className="schema-row">
+        <div className={
+            classnames("schema-row", {
+              "nested": checkComplexType(this.state.displayType.type)
+            })
+          }>
           <div className="field-name">
             <SelectWithOptions
               options={SCHEMA_TYPES.types}
@@ -130,7 +135,6 @@ export default class ArraySchemaRow extends Component{
               onChange={this.onTypeChange}
             />
           </div>
-          <div className="field-type"></div>
           <div className="field-isnull">
             <div className="btn btn-link">
               <Input

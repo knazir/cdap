@@ -15,16 +15,7 @@
 */
 
 .map-schema-row {
-  .map-schema-kv-row {
-    padding-left: 5px;
-    .key-row,
-    .value-row {
-      margin: 0;
-      > .abstract-schema-row {
-        padding-left: 10px;
-        padding-top: 0;
-      }
-    }
+  .schema-row {
     > .key-row,
     > .value-row {
       > .field-name {
@@ -32,53 +23,69 @@
         width: ~"-webkit-calc(100% - 80px - 75px)";
         width: ~"-moz-calc(100% - 80px - 75px)";
         display: inline-block;
-        span {
+        position: relative;
+        div {
           &:first-child {
-            margin: 0 10px 0 0;
-            min-width: 30px;
+            margin: 0 10px;
+            width: 30px;
+            display: inline-block;
+          }
+        }
+      }
+      > .field-type {
+        width: 80px;
+      }
+      > .field-isnull {
+        width: 75px;
+        .btn.btn-link {
+          display: inline-block;
+          padding: 0 5px;
+          width: 24px;
+        }
+      }
+      &.nested {
+        border: 0;
+        box-shadow: 0px 0px 3px 1px rgba(1, 0, 0, 0.2);
+        border-radius: 4px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+
+        >.field-name {
+          box-shadow: rgba(1, 0, 0, 0.25) 1px -1px 7px;
+          border-radius: 4px;
+          position: relative;
+          width: 155px;
+          &:before {
+            position: absolute;
+            content: ' ';
+            top: 34px;
+            bottom: 0;
+            width: 100%;
+            background: white;
+            box-shadow: none;
+            height: 10px;
           }
         }
       }
     }
-    > .key-row {
-      > .field-name {
-        .form-control {
-          width: ~"calc(100% - 37px)";
-          width: ~"-moz-calc(100% - 37px)";
-          width: ~"-webkit-calc(100% - 37px)";
-          vertical-align: inherit;
-          display: inline-block;
-        }
-      }
-    }
+    > .key-row,
     > .value-row {
       > .field-name {
         .form-control {
-          width: ~"calc(100% - 45px)";
-          width: ~"-moz-calc(100% - 45px)";
-          width: ~"-webkit-calc(100% - 45px)";
+          width: 90px;
           vertical-align: inherit;
           display: inline-block;
         }
+        &:after {
+          color: #3c4355;
+          content: "\f0d7";
+          font-family: 'FontAwesome';
+          position: absolute;
+          top: 7px;
+          left: 130px;
+          z-index: 5;
+        }
       }
-    }
-    .field-type {
-      width: 80px;
-    }
-    .field-isnull {
-      width: 75px;
-      .btn.btn-link {
-        padding: 0 5px;
-      }
-    }
-    .field-type,
-    .field-isnull {
-      display: inline-block;
-    }
-    .form-control {
-      padding: 0;
-      height: 25px;
-      margin: 2px 0 0 0;
     }
   }
 }

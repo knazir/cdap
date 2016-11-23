@@ -15,10 +15,9 @@
  */
 @import '../../styles/mixins.less';
 .schema-editor {
-  width: 600px;
+  max-width: 400px;
   .schema-header{
     padding: 5px 0;
-    border-bottom: 1px solid #ccc;
     .field-name {
       width: ~"calc(100% - 80px - 75px)";
       width: ~"-moz-calc(100% - 80px - 75px)";
@@ -41,6 +40,14 @@
   }
   .schema-body {
     .schema-row {
+      &:first-child {
+        border-top: 1px solid #ccc;
+        border-bottom: 0;
+      }
+      &:last-child {
+        border-bottom: 0;
+      }
+      border-bottom: 1px solid #ccc;
       > .field-name {
         width: ~"calc(100% - 80px - 75px)";
         width: ~"-moz-calc(100% - 80px - 75px)";
@@ -78,7 +85,7 @@
       .form-control {
         padding: 0 5px;
         height: 25px;
-        margin: 2px 0 0 0;
+        margin: 5px 0 10px 0;
         appearance: none;
         border: 0;
         box-shadow: none;
@@ -90,31 +97,39 @@
           box-shadow: none;
         }
       }
+      &.nested {
+        &:first-child {
+          border: 0;
+        }
+        border: 0;
+        box-shadow: -1px 0px 5px 1px rgba(1, 0, 0, 0.2);
+        border-radius: 4px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-top-right-radius: 0;
+
+        >.field-name {
+          box-shadow: rgba(1, 0, 0, 0.25) 1px -1px 7px;
+          border-radius: 4px;
+          position: relative;
+          &:before {
+            position: absolute;
+            content: ' ';
+            top: 34px;
+            bottom: 0;
+            width: 100%;
+            background: white;
+            box-shadow: none;
+            height: 10px;
+          }
+        }
+      }
+    }
+    >.record-schema-row {
+      >.schema-row:not(.nested) {
+        box-shadow: none;
+        border-bottom: 1px solid #ccc;
+      }
     }
   }
-  // .schema-body {
-  //   .field-name {
-  //     width: ~"calc(100% - 80px - 75px)";
-  //     width: ~"-moz-calc(100% - 80px - 75px)";
-  //     width: ~"-webkit-calc(100% - 80px - 75px)";
-  //   }
-  //   .field-type {
-  //     width: 80px;
-  //     padding: 0 5px;
-  //     vertical-align: bottom;
-  //   }
-  //   .field-isnull {
-  //     width: 75px;
-  //   }
-  //   .field-name,
-  //   .field-type,
-  //   .field-isnull {
-  //     display: inline-block;
-  //   }
-  //   .form-control {
-  //     padding: 5px;
-  //     height: 25px;
-  //     margin: 2px 0 0 0;
-  //   }
-  // }
 }

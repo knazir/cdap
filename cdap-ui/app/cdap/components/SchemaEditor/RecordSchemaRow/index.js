@@ -23,6 +23,7 @@ import {Input} from 'reactstrap';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {insertAt, removeAt} from 'services/helpers';
 import T from 'i18n-react';
+import classnames from 'classnames';
 
 export default class RecordSchemaRow extends Component{
   constructor(props) {
@@ -196,7 +197,11 @@ export default class RecordSchemaRow extends Component{
               .map((row, index) => {
                 return (
                   <div
-                    className="schema-row"
+                    className={
+                      classnames("schema-row", {
+                        "nested": checkComplexType(row.displayType)
+                      })
+                    }
                     key={row.id}
                   >
                     <div className="field-name">

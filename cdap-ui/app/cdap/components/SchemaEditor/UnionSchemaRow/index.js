@@ -21,7 +21,7 @@ import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 import {Input} from 'reactstrap';
 import {insertAt, removeAt} from 'services/helpers';
 import uuid from 'node-uuid';
-
+import classnames from 'classnames';
 require('./UnionSchemaRow.less');
 
 export default class UnionSchemaRow extends Component {
@@ -144,18 +144,25 @@ export default class UnionSchemaRow extends Component {
         <div className="text-danger">
           {this.state.error}
         </div>
-        <div className="union-schema-types-row">
           {
             this.state.displayTypes.map((displayType, index) => {
               return (
-                <div key={displayType.id}>
-                  <SelectWithOptions
-                    options={SCHEMA_TYPES.types}
-                    value={displayType.displayType}
-                    onChange={this.onTypeChange.bind(this, index)}
-                  />
-                  <div className="field-type"></div>
-                  <div className="field-isnull">
+                <div
+                  className={
+                    classnames("schema-row clearfix", {
+                      "nested": checkComplexType(displayType.displayType)
+                    })
+                  }
+                  key={displayType.id}
+                >
+                  <div className="field-name">
+                    <SelectWithOptions
+                      options={SCHEMA_TYPES.types}
+                      value={displayType.displayType}
+                      onChange={this.onTypeChange.bind(this, index)}
+                    />
+                  </div>
+                  <div className="field-isnull pull-right">
                     <div className="btn btn-link">
                       <Input
                         type="checkbox"
@@ -195,7 +202,6 @@ export default class UnionSchemaRow extends Component {
               );
             })
           }
-        </div>
       </div>
     );
   }

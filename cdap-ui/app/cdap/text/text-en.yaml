@@ -240,6 +240,7 @@ features:
   SchemaEditor:
     Labels:
       fieldName: Field Name
+      symbolName: Symbol Name
   Wizard:
     ApplicationUpload:
       Step1:
