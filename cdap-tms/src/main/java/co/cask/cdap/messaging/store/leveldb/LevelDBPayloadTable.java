@@ -16,11 +16,16 @@
 
 package co.cask.cdap.messaging.store.leveldb;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.messaging.MessagingUtils;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.AbstractPayloadTable;
+import co.cask.cdap.messaging.store.ImmutablePayloadTableEntry;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.RawPayloadTableEntry;
+import co.cask.cdap.proto.id.TopicId;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteBatch;
@@ -32,6 +37,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * LevelDB implementation of {@link PayloadTable}.
@@ -99,6 +105,38 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
       while (rowIterator.hasNext()) {
         Map.Entry<byte[], byte[]> candidateRow = rowIterator.next();
         rowKeysToDelete.add(candidateRow.getKey());
+      }
+    }
+
+    try {
+      for (byte[] deleteRowKey : rowKeysToDelete) {
+        levelDB.delete(deleteRowKey);
+      }
+    } catch (DBException ex) {
+      throw new IOException(ex);
+    }
+  }
+
+  /**
+   * Delete messages of a {@link TopicId} that has exceeded the TTL
+   *
+   * @param topicMetadata {@link TopicMetadata}
+   * @param currentTime current timestamp
+   * @throws IOException error occurred while trying to delete a row in LevelDB
+   */
+  public void pruneMessages(TopicMetadata topicMetadata, long currentTime) throws IOException {
+    List<byte[]> rowKeysToDelete = new ArrayList<>();
+    long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
+    byte[] startRow = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+    byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
+
+    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
+      while (rowIterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = rowIterator.next();
+        PayloadTable.Entry payloadTableEntry = new ImmutablePayloadTableEntry(entry.getKey(), entry.getValue());
+        if ((currentTime - payloadTableEntry.getPayloadWriteTimestamp()) > ttlInMs) {
+          rowKeysToDelete.add(entry.getKey());
+        }
       }
     }
 
