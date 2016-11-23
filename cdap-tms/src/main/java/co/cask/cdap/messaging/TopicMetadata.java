@@ -29,7 +29,7 @@ import java.util.Objects;
  */
 public class TopicMetadata {
 
-  private static final String TTL_KEY = "ttl";
+  public static final String TTL_KEY = "ttl";
 
   private final TopicId topicId;
   private final Map<String, String> properties;

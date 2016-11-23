@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
@@ -125,15 +126,22 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
+  public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
+    try (MetadataTable metadataTable = createMetadataTable()) {
+      return metadataTable.listTopics(namespaceId);
+    }
+  }
+
+  @Override
   public MessageFetcher prepareFetch(final TopicId topicId) throws TopicNotFoundException, IOException {
     TopicMetadata metadata = getTopic(topicId);
     return new CoreMessageFetcher(metadata, createMessageTable(metadata), createPayloadTable(metadata));
   }
 
   @Override
-  public MessageRollback publish(TopicId topicId, StoreRequest messages) throws TopicNotFoundException, IOException {
+  public MessageRollback publish(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
-      return messageTableWriterCache.get(topicId).persist(messages);
+      return messageTableWriterCache.get(request.getTopicId()).persist(request);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
@@ -142,9 +150,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
-  public void storePayload(TopicId topicId, StoreRequest messages) throws TopicNotFoundException, IOException {
+  public void storePayload(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
-      payloadTableWriterCache.get(topicId).persist(messages);
+      payloadTableWriterCache.get(request.getTopicId()).persist(request);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);

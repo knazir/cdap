@@ -32,6 +32,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>co.cask.common</groupId>
+      <artifactId>common-http</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
     </dependency>
@@ -54,6 +58,10 @@
     <dependency>
       <groupId>org.iq80.leveldb</groupId>
       <artifactId>leveldb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
     </dependency>
 
     <dependency>
@@ -82,6 +90,7 @@
       <artifactId>cdap-hbase-compat-base</artifactId>
       <version>${project.version}</version>
     </dependency>
+
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-hbase-compat-base</artifactId>
