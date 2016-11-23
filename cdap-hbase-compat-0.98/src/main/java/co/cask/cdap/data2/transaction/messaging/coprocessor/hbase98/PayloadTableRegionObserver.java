@@ -153,7 +153,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
           return ReturnCode.SKIP;
         }
       } catch (ExecutionException ex) {
-        LOG.error("Region " + env.getRegion().getRegionNameAsString() + ", exception while" +
+        LOG.debug("Region " + env.getRegion().getRegionNameAsString() + ", exception while" +
                     "trying to fetch properties of topicId" + entry.getTopicId(), ex);
       }
       return ReturnCode.INCLUDE;

@@ -16,11 +16,9 @@
 
 package co.cask.cdap.messaging.store.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.test.SingletonExternalResource;
-import com.google.inject.Injector;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
@@ -38,11 +36,7 @@ import org.junit.runners.Suite;
 })
 public class HBaseMessageTestSuite {
 
-  private static final CConfiguration cConf = CConfiguration.create();
-
   static final HBaseTestBase HBASE_TEST_BASE = new HBaseTestFactory().get();
-
-  private static Injector injector;
 
   // This is used by JUnit only. Wrap it with SingletonExternalResource so that it only get started once in the suite
   // Individual test class included in this suite will also have a @ClassRule that point to this field.
