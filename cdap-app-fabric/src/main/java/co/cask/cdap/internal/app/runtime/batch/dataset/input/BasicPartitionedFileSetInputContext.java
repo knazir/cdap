@@ -55,7 +55,6 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
 
     InputSplit inputSplit = multiInputTaggedSplit.getInputSplit();
     if (!(inputSplit instanceof FileSplit)) {
-      // TODO: need to support FileSplit (old version)?
       throw new IllegalArgumentException(String.format("Expected a '%s', but got '%s'.",
                                                        FileSplit.class.getName(), inputSplit.getClass().getName()));
     }
